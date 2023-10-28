@@ -1,0 +1,22 @@
+﻿FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+
+COPY ["src/Organization/Organization.API/Organization.API.csproj", "./src/Organization/Organization.API/"]
+COPY ["src/Organization/Organization.Infrastructure/Organization.Infrastructure.csproj", "./src/Organization/Organization.Infrastructure/"]
+COPY ["src/Organization/Organization.Application/Organization.Application.csproj", "./src/Organization/Organization.Application/"]
+COPY ["src/Organization/Organization.Domain/Organization.Domain.csproj", "./src/Organization/Organization.Domain/"]
+COPY ["src/Shared/Shared.csproj", "./src/Shared/"]
+RUN dotnet restore "./src/Organization/Organization.API/Organization.API.csproj"
+
+COPY . .
+RUN dotnet publish "./src/Organization/Organization.API/Organization.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "Organization.API.dll"]

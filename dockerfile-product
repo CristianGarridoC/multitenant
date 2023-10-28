@@ -1,0 +1,22 @@
+﻿FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+
+COPY ["src/Product/Product.API/Product.API.csproj", "./src/Product/Product.API/"]
+COPY ["src/Product/Product.Infrastructure/Product.Infrastructure.csproj", "./src/Product/Product.Infrastructure/"]
+COPY ["src/Product/Product.Application/Product.Application.csproj", "./src/Product/Product.Application/"]
+COPY ["src/Product/Product.Domain/Product.Domain.csproj", "./src/Product/Product.Domain/"]
+COPY ["src/Shared/Shared.csproj", "./src/Shared/"]
+RUN dotnet restore "./src/Product/Product.API/Product.API.csproj"
+
+COPY . .
+RUN dotnet publish "./src/Product/Product.API/Product.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "Product.API.dll"]
