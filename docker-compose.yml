@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  postgres:
+    container_name: multitenant_psql
+    hostname: multitenant_psql_local
+    image: postgres:15.1
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_USER=user
+      - POSTGRES_DB=postgres
+  
+  backend-organization:
+    container_name: backend_organization
+    depends_on:
+      - postgres
+      - backend-product
+    restart: on-failure
+    ports:
+      - "5200:80"
+    build:
+      context: .
+      dockerfile: dockerfile-organization
+      
+  backend-product:
+    container_name: backend_product
+    depends_on:
+      - postgres
+    ports:
+      - "5400:80"
+    build:
+      context: .
+      dockerfile: dockerfile-product
+
+volumes:
+  postgres_data:
+      
